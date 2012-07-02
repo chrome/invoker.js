@@ -1,0 +1,21 @@
+{
+  "name": "invoker",
+  "version": "0.0.1",
+  "author": "Alex Chrome <alex@chrome-its.me>",
+  "description": "pub/sub library",
+
+
+  "devDependencies": {
+    "coffee-script" : "1.3.3",
+    "mocha"         : "1.1.0",
+    "chai"          : "1.0.4",
+    "sinon"         : "1.3.4",
+    "sinon-chai"    : "2.1.0",
+    "uglify-js"     : "1.3.2"
+  },
+
+  "license": "MIT",
+  "engine": {
+    "node": ">=0.4"
+  }
+}

@@ -9,16 +9,20 @@ chai.use(sinonChai)
 
 
 describe 'Invoker', ->
+
   beforeEach (done) ->
     Invoker.subscribers = {}
     done()
 
   describe 'subscribe', ->
+
     it 'should be defined', ->
       Invoker.subscribe.should.exist
 
+
     it 'should accept topic name with callback', ->
       (-> Invoker.subscribe('topic', sinon.spy())).should.not.throw()
+
 
     it 'should subscribe multiple topics at once', ->
       spy = sinon.spy()
@@ -29,6 +33,7 @@ describe 'Invoker', ->
       Invoker.publish('topic2')
 
       spy.should.be.calledTwice
+
 
     it 'should subscribe by wildcards ("*")', ->
       spy = sinon.spy()
@@ -41,6 +46,7 @@ describe 'Invoker', ->
       Invoker.publish('top')
 
       spy.should.have.been.calledThrice
+
 
     it 'should subscribe by wildcards ("?")', ->
       spy = sinon.spy()
@@ -56,8 +62,10 @@ describe 'Invoker', ->
 
 
   describe 'publish', ->
+
     it 'should be defined', ->
       Invoker.publish.should.exist
+
 
     it 'should run callback', ->
       spy = sinon.spy()
@@ -65,6 +73,7 @@ describe 'Invoker', ->
       Invoker.publish('topic')
 
       spy.should.be.calledOnce
+
 
     it 'should run callback twice', ->
       spy = sinon.spy()
@@ -82,6 +91,7 @@ describe 'Invoker', ->
 
       spy.should.be.calledWith(1, 2, 3)
 
+
     it 'should run callback with context', ->
       spy = sinon.spy()
 
@@ -92,6 +102,7 @@ describe 'Invoker', ->
       Invoker.publish('topic')
 
       spy.should.be.calledOn(subTest)
+
 
     it 'should run multiple callbacks', ->
       spy1 = sinon.spy()
@@ -104,6 +115,7 @@ describe 'Invoker', ->
 
       spy1.should.be.calledOnce
       spy2.should.be.calledOnce
+
 
     it 'should run multiple callbacks on different contexts', ->
       spy1 = sinon.spy()
@@ -150,20 +162,6 @@ describe 'Invoker', ->
       spy2.should.be.calledOnce
       spy3.should.not.be.called
 
-    # it 'should run callbacks subscribed by wildcards by wildcards ("*")', ->
-    #   spy1 = sinon.spy()
-    #   spy2 = sinon.spy()
-    #   spy3 = sinon.spy()
-
-    #   Invoker.subscribe('ns1:topic?', spy1)
-    #   Invoker.subscribe('ns2:topic?', spy2)
-
-    #   Invoker.publish('ns?:topic1')
-
-    #   spy1.should.be.calledOnce
-    #   spy2.should.be.calledOnce
-
-
 
     it 'should run callbacks by wildcards ("?")', ->
       spy1 = sinon.spy()
@@ -180,6 +178,7 @@ describe 'Invoker', ->
       spy2.should.be.calledOnce
       spy3.should.not.be.called
 
+
     it 'should run callbacks by priority order', ->
       a = ''
       spy1 = -> a += '1'
@@ -194,9 +193,47 @@ describe 'Invoker', ->
 
       a.should.be.equal '231'
 
+    it 'should break callbacks execution if callback returns Invoker.STOP', ->
+      a = ''
+      spy1 = -> a += '1'
+      spy2 = -> a += '2'
+      spy3 = ->
+        a += '3'
+        Invoker.STOP
+      spy4 = -> a += '4'
+
+      Invoker.subscribe('topic', spy1, 1)
+      Invoker.subscribe('topic', spy2, 2)
+      Invoker.subscribe('topic', spy3, 3)
+      Invoker.subscribe('topic', spy4, 4)
+
+      Invoker.publish('topic')
+
+      a.should.be.equal '123'
+
+
+    it 'should break callbacks execution if callback raise exception', ->
+      a = ''
+      spy1 = -> a += '1'
+      spy2 = -> a += '2'
+      spy3 = -> notExistedFunction()
+      spy4 = -> a += '3'
+
+      Invoker.subscribe('topic', spy1, 1)
+      Invoker.subscribe('topic', spy2, 2)
+      Invoker.subscribe('topic', spy3, 3)
+      Invoker.subscribe('topic', spy4, 4)
+
+      (-> Invoker.publish('topic')).should.throw()
+      a.should.be.equal '12'
+
+
+
   describe 'unsubscribe', ->
+
     it 'should be defined', ->
       Invoker.unsubscribe.should.exist
+
 
     it 'should unsubscribe by topic', ->
       spy1 = sinon.spy()
@@ -216,6 +253,7 @@ describe 'Invoker', ->
       spy2.should.not.be.called
       spy3.should.be.calledOnce
 
+
     it 'should unsubscribe by topic and callback', ->
       spy1 = sinon.spy()
       spy2 = sinon.spy()
@@ -229,6 +267,7 @@ describe 'Invoker', ->
 
       spy1.should.not.be.called
       spy2.should.be.calledOnce
+
 
     it 'should unsubscribe by topic and context', ->
       spy = sinon.spy()
@@ -245,6 +284,7 @@ describe 'Invoker', ->
 
       spy.should.not.be.calledOn(context1)
       spy.should.be.calledOn(context2)
+
 
     it 'should unsubscribe by topic, context and callback', ->
       spy1 = sinon.spy()

@@ -1,8 +1,11 @@
 class Invoker
 
+  @STOP: '7Jxmz}a&nst4@Y'
+
   @settings:
     async: false
     defaultPriority: 10
+    breakOnError: true
 
   testEventName = (tested, target) ->
     !!getRegExp(tested).exec(target) or !!getRegExp(target).exec(tested)
@@ -30,26 +33,26 @@ class Invoker
       )
 
     for subscriber in toExecute
-      if subscriber.context
-        if async
-          setTimeout(
-            ->
-              subscriber.callback.call(subscriber.context, options...)
-            1
-          )
-        else
-          subscriber.callback.call(subscriber.context, options...)
+      if async
+        setTimeout(
+          ->
+            subscriber.callback.call(subscriber.context, options...)
+          1
+        )
       else
-        if async
-          setTimeout(
-            ->
-              subscriber.callback(options...)
-            1
-          )
+        if @settings.breakOnError
+          callbackResult = subscriber.callback.call(subscriber.context, options...)
         else
-          subscriber.callback(options...)
-
-
+          try
+            callbackResult = subscriber.callback.call(subscriber.context, options...)
+          catch e
+            setTimeout(
+              ->
+                throw e
+              1
+            )
+        if callbackResult == @STOP
+          break
 
   @subscribe: (event, context, callback, priority = @settings.defaultPriority) ->
     if arguments.length == 3 and typeof(callback) == 'number'
@@ -64,7 +67,6 @@ class Invoker
     for event in events
       @subscribers[event] ?= []
       @subscribers[event].push({callback, context, priority})
-
 
   @unsubscribe: (event, context, callback) ->
     return false unless @subscribers?

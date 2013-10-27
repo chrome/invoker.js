@@ -7,9 +7,12 @@
 
     function Invoker() {}
 
+    Invoker.STOP = '7Jxmz}a&nst4@Y';
+
     Invoker.settings = {
       async: false,
-      defaultPriority: 10
+      defaultPriority: 10,
+      breakOnError: true
     };
 
     testEventName = function(tested, target) {
@@ -23,7 +26,7 @@
     };
 
     Invoker.publish = function() {
-      var async, event, options, subscriber, toExecute, topic, _i, _j, _len, _len1, _ref, _ref1, _results;
+      var async, callbackResult, event, options, subscriber, toExecute, topic, _i, _j, _len, _len1, _ref, _ref1, _ref2, _results;
       event = arguments[0], options = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       if (this.subscribers == null) {
         return false;
@@ -48,22 +51,27 @@
       _results = [];
       for (_j = 0, _len1 = toExecute.length; _j < _len1; _j++) {
         subscriber = toExecute[_j];
-        if (subscriber.context) {
-          if (async) {
-            _results.push(setTimeout(function() {
-              var _ref1;
-              return (_ref1 = subscriber.callback).call.apply(_ref1, [subscriber.context].concat(__slice.call(options)));
-            }, 1));
-          } else {
-            _results.push((_ref1 = subscriber.callback).call.apply(_ref1, [subscriber.context].concat(__slice.call(options))));
-          }
+        if (async) {
+          _results.push(setTimeout(function() {
+            var _ref1;
+            return (_ref1 = subscriber.callback).call.apply(_ref1, [subscriber.context].concat(__slice.call(options)));
+          }, 1));
         } else {
-          if (async) {
-            _results.push(setTimeout(function() {
-              return subscriber.callback.apply(subscriber, options);
-            }, 1));
+          if (this.settings.breakOnError) {
+            callbackResult = (_ref1 = subscriber.callback).call.apply(_ref1, [subscriber.context].concat(__slice.call(options)));
           } else {
-            _results.push(subscriber.callback.apply(subscriber, options));
+            try {
+              callbackResult = (_ref2 = subscriber.callback).call.apply(_ref2, [subscriber.context].concat(__slice.call(options)));
+            } catch (e) {
+              setTimeout(function() {
+                throw e;
+              }, 1);
+            }
+          }
+          if (callbackResult === this.STOP) {
+            break;
+          } else {
+            _results.push(void 0);
           }
         }
       }
